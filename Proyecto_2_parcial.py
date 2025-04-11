@@ -1,11 +1,17 @@
 import streamlit as st
 import yfinance as yf
 import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
 import plotly.express as px
 import datetime
 import numpy as np
+from deep_translator import GoogleTranslator
+
+# Función para traducir texto
+def traducir(texto, lang_destino="es"):
+    try:
+        return GoogleTranslator(source='auto', target=lang_destino).translate(texto)
+    except:
+        return texto  # si hay error, retorna el texto original
 
 # Configuración de la página
 st.set_page_config(page_title="Análisis Financiero", layout="wide")
@@ -40,10 +46,10 @@ if ticker:
                     st.write("Logo no disponible")
 
             with col2:
-                nombre = info.get("longName", "No disponible")
-                sector = info.get("sector", "No disponible")
-                industria = info.get("industry", "No disponible")
-                descripcion_completa = info.get("longBusinessSummary", "Descripción no disponible")
+                nombre = traducir(info.get("longName", "No disponible"))
+                sector = traducir(info.get("sector", "No disponible"))
+                industria = traducir(info.get("industry", "No disponible"))
+                descripcion_completa = traducir(info.get("longBusinessSummary", "Descripción no disponible"))
                 descripcion_breve = descripcion_completa[:600].rsplit(". ", 1)[0] + "."
 
                 st.markdown(f"""
@@ -107,19 +113,6 @@ if ticker:
                                          labels={columna_precio: 'Precio ($)', 'index': 'Fecha'})
                     st.plotly_chart(fig_plotly, use_container_width=True)
 
-                    # GRAFICA ESTÁTICA
-                    st.subheader("📈 Gráfica Clásica (Matplotlib)")
-                    fig, ax = plt.subplots(figsize=(10, 6))
-                    ax.plot(historial_df.index, historial_df[columna_precio], label='Cierre', color='b')
-                    ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
-                    ax.xaxis.set_major_locator(mdates.YearLocator())
-                    plt.xticks(rotation=45)
-                    ax.set_title(f"Precios de Cierre - {ticker.upper()}", fontsize=16)
-                    ax.set_xlabel("Fecha", fontsize=12)
-                    ax.set_ylabel("Precio ($)", fontsize=12)
-                    ax.legend()
-                    st.pyplot(fig)
-
                     # RENDIMIENTOS ANUALIZADOS (CAGR)
                     st.subheader("📈 Rendimientos Anualizados (CAGR)")
 
@@ -167,10 +160,8 @@ if ticker:
                     **¿De qué nos sirve la Volatilidad Anualizada?**  
                     La volatilidad anualizada mide cuánto puede cambiar el precio de una acción en un año, en porcentaje. Se calcula usando la desviación estándar de los cambios diarios, ajustada por √252 (días hábiles al año). Por ejemplo, un 20% significa que el precio podría subir o bajar un 20% en promedio; un 40%, un 40%, mostrando más riesgo. Es útil para entender qué tan estable o arriesgada es una inversión.
                     """)
-
                 else:
                     st.warning("⚠️ No se encontraron columnas válidas de precios para graficar.")
-
         else:
             st.error("❌ El ticker ingresado no existe. Por favor, intenta de nuevo como lo muestra el ejemplo.")
     except Exception as e:
